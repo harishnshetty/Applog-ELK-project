@@ -54,7 +54,7 @@ sudo apt-get update && sudo apt-get install elasticsearch -y
 
 **1.3 Configure Elasticsearch**
 ```sh
-sudo vi /etc/elasticsearch/elasticsearch.yml
+sudo nano /etc/elasticsearch/elasticsearch.yml
 ```
 Modify:
 ```
@@ -85,7 +85,7 @@ sudo apt install logstash -y
 
 **2.2 Configure Logstash to Accept Logs**
 ```sh
-sudo vi /etc/logstash/conf.d/logstash.conf
+sudo nano /etc/logstash/conf.d/logstash.conf
 ```
 Add:
 ```
@@ -129,7 +129,7 @@ sudo apt install kibana -y
 
 **3.2 Configure Kibana**
 ```sh
-sudo vi /etc/kibana/kibana.yml
+sudo nano /etc/kibana/kibana.yml
 ```
 Modify:
 ```
@@ -166,7 +166,7 @@ sudo apt install filebeat -y
 
 **4.2 Configure Filebeat to Send Logs to Logstash**
 ```sh
-sudo vi /etc/filebeat/filebeat.yml
+sudo nano /etc/filebeat/filebeat.yml
 ```
 Modify:
 ```yaml
