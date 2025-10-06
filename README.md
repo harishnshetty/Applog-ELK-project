@@ -1,13 +1,12 @@
-
 # 🚀 App Log ELK Project
 ## 
 
 ## For more projects, check out  
 [https://harishnshetty.github.io/projects.html](https://harishnshetty.github.io/projects.html)
 
-[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/8391945b71df68d8741bf225ce4af892cd308b99/awsresourcefinder.jpg)](https://youtu.be/KNH_qe1vJAg)
-
-
+<p align="center">
+  [![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/8391945b71df68d8741bf225ce4af892cd308b99/awsresourcefinder.jpg)](https://youtu.be/KNH_qe1vJAg)
+</p>
 
 ## Required Setup
 
@@ -31,7 +30,7 @@ We are using three EC2 Ubuntu machines:
 sudo apt update && sudo apt install openjdk-17-jre-headless -y
  1.2 Install Elasticsearch
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee
+echo "deb https://artifacts.elasticco/packages/7.x/apt stable main" | sudo tee
 /etc/apt/sources.list.d/elastic-7.x.list
 sudo apt update
 sudo apt install elasticsearch -y
@@ -147,4 +146,4 @@ You have successfully:
  Installed Elasticsearch, Logstash, Kibana, and Filebeat
  Set up a Java application to generate logs
  Parsed logs into structured fields using Grok
- Created a real-time Kibana dashboard for log monitoring 
+ Created a real-time Kibana dashboard for log monitoring
