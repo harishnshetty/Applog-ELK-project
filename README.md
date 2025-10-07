@@ -50,6 +50,8 @@ echo $JAVA_HOME
 
 ```bash
 sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 22
 sudo ufw allow 5601/tcp       # Kibana
 sudo ufw allow 9200/tcp       # Elasticsearch
 sudo ufw allow 5044/tcp       # Logstash
@@ -71,7 +73,7 @@ sudo apt-get update && sudo apt-get install elasticsearch -y
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl enable elasticsearch
-sudo systemctl restart elasticsearch
+sudo systemctl start elasticsearch
 sudo systemctl status elasticsearch
 ```
 
