@@ -132,23 +132,32 @@ sudo apt install logstash -y
 sudo nano /etc/logstash/conf.d/logstash.conf
 ```
 Add:
-```
+```sh
 input {
   beats {
     port => 5044
   }
 }
+
 filter {
   grok {
     match => { "message" => "%{TIMESTAMP_ISO8601:log_timestamp} %{LOGLEVEL:log_level} %{GREEDYDATA:log_message}" }
   }
 }
+
 output {
   elasticsearch {
-    hosts => ["http://localhost:9200"]
+    hosts => ["https://localhost:9200"]
+    user => "elastic"                     # or "logstash_internal" if you created one
+    password => "your_actual_password"    # replace with the real password
+    ssl => true
+    cacert => "/etc/elasticsearch/certs/http_ca.crt"
     index => "logs-%{+YYYY.MM.dd}"
   }
-  stdout { codec => rubydebug }
+
+  stdout {
+    codec => rubydebug
+  }
 }
 ```
 
@@ -156,13 +165,10 @@ output {
 ```sh
 sudo systemctl start logstash
 sudo systemctl enable logstash
+sudo systemctl restart logstash
 sudo systemctl status logstash
 ```
 
-**2.4 Allow Traffic on Port 5044**
-```sh
-sudo ufw allow 5044/tcp
-```
 
 #### Step 3: Install & Configure Kibana (ELK Server)
 
@@ -177,6 +183,7 @@ sudo nano /etc/kibana/kibana.yml
 ```
 Modify:
 ```
+server.port: 5601
 server.host: "0.0.0.0"
 elasticsearch.hosts: ["http://localhost:9200"]
 ```
@@ -185,12 +192,8 @@ elasticsearch.hosts: ["http://localhost:9200"]
 ```sh
 sudo systemctl start kibana
 sudo systemctl enable kibana
+sudo systemctl restart kibana
 sudo systemctl status kibana
-```
-
-**3.4 Allow Traffic on Port 5601**
-```sh
-sudo ufw allow 5601/tcp
 ```
 
 **3.5 Access Kibana Dashboard**
@@ -198,13 +201,16 @@ sudo ufw allow 5601/tcp
 Open a browser and go to:  
 `http://<ELK_Server_Public_IP>:5601`
 
+```bash
+/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
+```
+```bash
+/usr/share/kibana/bin/kibana-verification-code
+```
 #### Step 4: Install & Configure Filebeat (Client Machine)
 
 **4.1 Install Filebeat**
 ```sh
-wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
-sudo apt update
 sudo apt install filebeat -y
 ```
 
@@ -213,48 +219,106 @@ sudo apt install filebeat -y
 sudo nano /etc/filebeat/filebeat.yml
 ```
 Modify:
-```yaml
+```bash
+# ============================== Filebeat inputs ===============================
+
 filebeat.inputs:
   - type: log
     enabled: true
     paths:
-      - /home/ubuntu/Boardgame/target/app.log
+      - /var/log/demoapp.log
+    fields:
+      app: demoapp
+    fields_under_root: true
 
+# ============================== Filebeat modules ==============================
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# ============================== Filebeat outputs ==============================
+
+# Comment Elasticsearch output
+# output.elasticsearch:
+#   hosts: ["localhost:9200"]
+
+# Enable Logstash output
 output.logstash:
-  hosts: ["<ELK_Server_Private_IP>:5044"]
+  hosts: ["192.168.64.2:5044"]
+
+# ============================== Logging =======================================
+
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
 ```
 
 **4.3 Start & Enable Filebeat**
 ```sh
 sudo systemctl start filebeat
 sudo systemctl enable filebeat
+sudo systemctl restart filebeat
 sudo systemctl status filebeat
 ```
 
 **4.4 Verify Filebeat is Sending Logs**
 ```sh
-sudo filebeat test output
+sudo filebeat test config
 ```
+## Config OK
 
-#### Step 5: Deploy Java Application & Generate Logs
+```bash
+curl -u elastic:password -X GET "http://localhost:9200/_cluster/health?pretty"
+```
+#### Step 5: Deploy node Application & Generate Logs
 
-**5.1 Install Java (If Not Installed)**
+**5.1 Install not (If Not Installed)**
 ```sh
-sudo apt install openjdk-17-jre-headless -y
+sudo apt update
+sudo apt install -y nodejs npm
+node -v
+npm -v
+
+
+mkdir ~/demo-node-app
+cd ~/demo-node-app
+nano app.js
+
+```
+```bash
+const http = require('http');
+const fs = require('fs');
+const path = '/var/log/demoapp.log';
+
+const server = http.createServer((req, res) => {
+  const log = `${new Date().toISOString()} ${req.method} ${req.url}\n`;
+  fs.appendFileSync(path, log);
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('Hello from Demo Node.js App!\n');
+});
+
+server.listen(3000, () => {
+  console.log('Demo Node.js app running on port 3000');
+});
+
+```
+```bash
+sudo node app.js
+```
+```bash
+curl http://localhost:3000/test
+curl http://localhost:3000/hello
+curl http://localhost:3000/metrics
+```
+```bash
+/var/log/demoapp.log
 ```
 
-**5.2 Download & Run Sample Java App**
-```sh
-wget https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-sample-simple/1.4.2.RELEASE/spring-boot-sample-simple-1.4.2.RELEASE.jar -O app.jar
-nohup java -jar app.jar > /home/ubuntu/Boardgame/target/app.log 2>&1 &
-```
-
-**5.3 Verify Java Application is Running**
-
-**5.4 Generate Logs for Testing**
-```sh
-echo "Test log entry $(date)" >> /home/ubuntu/Boardgame/target/app.log
-```
 
 #### Step 6: View & Analyze Logs in Kibana
 
