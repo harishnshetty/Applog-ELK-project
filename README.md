@@ -32,14 +32,29 @@ We are using three EC2 Ubuntu machines:
 ```sh
 sudo apt update && sudo apt install openjdk-17-jre-headless -y
 ```
-```sh
-sudo apt update && sudo apt install openjdk-21-jre-headless
+
+```bash
+apt-get update && apt dist-upgrade -y && apt-get install -y vim curl zip gnupg gpg 
 ```
 
-```sh
-sudo apt update && sudo apt install openjdk-21-jdk
+```bash
+nano /etc/environment
+```
+```bash
+JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+```
+```bash
+source /etc/environment
+echo $JAVA_HOME
 ```
 
+```bash
+sudo ufw allow 80
+sudo ufw allow 5601/tcp       # Kibana
+sudo ufw allow 9200/tcp       # Elasticsearch
+sudo ufw allow 5044/tcp       # Logstash
+sudo ufw enable
+```
 **1.2 Install Elasticsearch**
 
 ```bash
@@ -52,28 +67,50 @@ sudo apt-get update && sudo apt-get install elasticsearch -y
 
 ```
 
+**1.4 Start & Enable Elasticsearch**
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable elasticsearch
+sudo systemctl restart elasticsearch
+sudo systemctl status elasticsearch
+```
+
+## Auto Generated password [ Sample ]
+- The generated password for the elastic built-in superuser is : In7bFzU8EyXJ+71ImQFR 
+
+## for the Reset
+```bash
+sudo /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -i
+```
+
+```bash
+mv /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch_backup.yml
+```
+
 **1.3 Configure Elasticsearch**
 ```sh
 sudo nano /etc/elasticsearch/elasticsearch.yml
 ```
 Modify:
 ```
+
 network.host: 0.0.0.0
-cluster.name: my-cluster
-node.name: node-1
-discovery.type: single-node
+discovery.seed_hosts: ["127.0.0.1", "[::1]","host1", "host2"]
+xpack.security.enabled: false
+
+```
+```bash
+sudo chown -R elasticsearch:elasticsearch /etc/elasticsearch /var/lib/elasticsearch /var/log/elasticsearch
+```
+```bash
+systemctl restart elasticsearch
 ```
 
-**1.4 Start & Enable Elasticsearch**
-```sh
-sudo systemctl start elasticsearch
-sudo systemctl enable elasticsearch
-sudo systemctl status elasticsearch
-```
+curl -X GET "localhost:9200"
 
 **1.5 Verify Elasticsearch**
 ```sh
-curl -X GET "http://localhost:9200"
+curl -X GET -u elastic:In7bFzU8EyXJ+71ImQFR  https://localhost:9200 --cacert /etc/elasticsearch/certs/http_ca.crt
 ```
 
 #### Step 2: Install & Configure Logstash (ELK Server)
