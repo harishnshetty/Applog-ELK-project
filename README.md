@@ -80,39 +80,44 @@ sudo systemctl status elasticsearch
 ## Auto Generated password [ Sample ]
 - The generated password for the elastic built-in superuser is : In7bFzU8EyXJ+71ImQFR 
 
-## for the Reset
-```bash
-sudo /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -i
-```
+
 
 ```bash
-mv /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch_backup.yml
+cp /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch_backup.yml
 ```
+
+
+
 
 **1.3 Configure Elasticsearch**
 ```sh
 sudo nano /etc/elasticsearch/elasticsearch.yml
 ```
 Modify:
-```
-
+```bash
 network.host: 0.0.0.0
 discovery.seed_hosts: ["127.0.0.1", "[::1]","host1", "host2"]
-xpack.security.enabled: false
-
 ```
 ```bash
 sudo chown -R elasticsearch:elasticsearch /etc/elasticsearch /var/lib/elasticsearch /var/log/elasticsearch
 ```
+
 ```bash
 systemctl restart elasticsearch
+sudo systemctl status elasticsearch
 ```
 
+```bash
 curl -X GET "localhost:9200"
+```
+## for the Reset
+```bash
+sudo /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -i
+```
 
 **1.5 Verify Elasticsearch**
 ```sh
-curl -X GET -u elastic:In7bFzU8EyXJ+71ImQFR  https://localhost:9200 --cacert /etc/elasticsearch/certs/http_ca.crt
+sudo curl -X GET -u elastic:password https://localhost:9200 --cacert /etc/elasticsearch/certs/http_ca.crt
 ```
 
 #### Step 2: Install & Configure Logstash (ELK Server)
